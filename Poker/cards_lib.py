@@ -2,6 +2,7 @@ from collections import Counter, OrderedDict
 import random
 import secrets
 
+#List of strings to generate cards
 #H - hearts, C - clubs, D - diamonds, S - spades
 STRING_DECK = ['%s%s' % (value, suit) for suit in 'HCDS' for value in list(['A'] + list(range(2,11)) + ['J', 'Q', 'K'])]
 
@@ -12,6 +13,7 @@ class Card:
         self.__set_true_value()
         self.__id = secrets.token_hex(16) #Assigning token hex for future sanity check
 
+    #Calculating for easier value comparing
     def __set_true_value(self):
         elders = {'J': 11, 'Q': 12, 'K': 13, 'A': 14}
         self.__true_value = 0
@@ -20,6 +22,7 @@ class Card:
         except ValueError: #Not a number - probably elder card
             self.__true_value = elders[self.__value]
 
+    #You shouldn't change anything in cards, so any values of cards are read-only
     @property
     def value(self): #Getter
         return self.__value
@@ -36,13 +39,13 @@ class Card:
     def id(self): #Getter
         return self.__id
     
+    #It'll return stuff that will show you when you pass this object to print() or str()
     def __str__(self):
         return str(str(self.value) + str(self.suit))
-
-def list_str_to_card(strings: list):
-    pass
     
 class DynamicHand:
+    #There are only basic properties of any card hand
+    #If you want more possibilities, you have to create inherited class
     def __init__(self, cards: list | None = None, enable_sorting: bool = False):
         if cards == None:
             self._cards = []
@@ -51,11 +54,15 @@ class DynamicHand:
         self._enable_sorting = enable_sorting
         self._update_stats()
 
+    #Just inserting card into hand (mosly from deck)
+    #You need to pass there Card object since i want to prevent cheating
+    #Calculations with cards are planned in inherited classes
     def append(self, card: Card):
         self._cards.append(card)
         self._update_stats()
 
-    def find_card_by_str(self, c: str):
+    #Internal function for seeking card by string value
+    def _find_card_by_str(self, c: str):
         target_card = Card(c)
         for card in self._cards:
             if target_card.true_value == card.true_value:
@@ -63,9 +70,11 @@ class DynamicHand:
                     return card
         return None
 
+    #Just drawing card from hand
+    #You can pass both str and Card objects since calling function is basically a request
     def draw(self, card: str|Card):
         if type(card) == str:
-            drawn_card = self.find_card_by_str(c=card)
+            drawn_card = self._find_card_by_str(c=card)
             try:
                 self._cards.remove(drawn_card)
             except ValueError:
@@ -81,12 +90,17 @@ class DynamicHand:
             self._update_stats()
             return drawn_card
 
+    #Function that should be called after any change in hand
+    #Could be overriden in inherited classes, because stats are diffrent for any game
     def _update_stats(self):
         if self._enable_sorting:
             self._sort(priority="values")
         pass
 
-    def _sort(self, priority: str):
+    #Stable sorting cards with variable priority
+    #For example, in poker suits doesn't matter unless you have mono-suit hand
+    #But in Durak (traditional Russian card game) suits matter, so you would want to sort by suits first
+    def _sort(self, priority: str = "values"):
         if priority not in ["values", "suits"]:
             raise ValueError
         if priority == "suits":
@@ -96,7 +110,8 @@ class DynamicHand:
             self._cards.sort(key=Card.true_value)
             self._cards.sort(key=Card.suit)
         pass
-
+    
+    #It'll return stuff that will show you when you pass this object to print() or str()
     def __str__(self):
         string = ""
         for c in self._cards:
@@ -104,6 +119,8 @@ class DynamicHand:
         return string
 
 class DynamicClassicPokerHand(DynamicHand):
+    #This is Classic Poker hand, that inherits from DynamicHand
+    #There would be calculations to see power of hand, comparing other hands, etc.
     def __init__(self):
         DynamicHand.__init__(self, enable_sorting=True)
 
@@ -111,6 +128,8 @@ class DynamicClassicPokerHand(DynamicHand):
         self._sort(priority="values")
 
 class Deck(DynamicHand):
+    #Just creating deck and shuffling it
+    #Any operations with DynamicHand are also working with Deck
     def __init__(self):
         super().__init__()
         for c in STRING_DECK:
@@ -121,16 +140,8 @@ class Deck(DynamicHand):
                     break
         random.shuffle(self._cards)
 
+    #You can draw only from top of deck, so you don't have to specify card that you want to draw
     def draw(self):
         if len(self._cards) > 0:
             return super().draw(self._cards[0])
         return None
-
-deck = Deck()
-print(deck)
-hand = DynamicHand()
-for i in range(0, 5):
-    hand.append(deck.draw())
-print(hand)
-print(deck)
-#print(STRING_DECK)
