@@ -28,7 +28,7 @@ class Card:
         return self.__value
     
     @property
-    def true_value(self): #Getter
+    def true_value(self) -> int: #Getter
         return self.__true_value
     
     @property
@@ -104,11 +104,11 @@ class DynamicHand:
         if priority not in ["values", "suits"]:
             raise ValueError
         if priority == "suits":
-            self._cards.sort(key=Card.suit)
-            self._cards.sort(key=Card.true_value)
+            self._cards.sort(key=lambda c: c.true_value)
+            self._cards.sort(key=lambda c: c.suit)
         if priority == "values":
-            self._cards.sort(key=Card.true_value)
-            self._cards.sort(key=Card.suit)
+            self._cards.sort(key=lambda c: c.suit)
+            self._cards.sort(key=lambda c: c.true_value)
         pass
     
     #It'll return stuff that will show you when you pass this object to print() or str()
@@ -122,17 +122,61 @@ class DynamicClassicPokerHand(DynamicHand):
     #This is Classic Poker hand, that inherits from DynamicHand
     #There would be calculations to see power of hand, comparing other hands, etc.
     def __init__(self):
-        DynamicHand.__init__(self, enable_sorting=True)
         self._value_counter = Counter()
         self._hand_rank = [] #It would be used for comparing hands
+        DynamicHand.__init__(self, enable_sorting=True)
 
     #Overriding updating stats
     def _update_stats(self) -> None:
         self._sort(priority="values")
         self._value_counter = Counter([x.value for x in self._cards])
+        self._set_rank()
 
     def _set_rank(self) -> None:
+        self._hand_rank.clear()
+        ranks = {'Incomplete': 0,
+                 'High Card': 1,
+                 'Pair': 2,
+                 'Two Pairs': 3,
+                 'Three of a Kind': 4,
+                 'Wheel': 5,
+                 'Straight': 6,
+                 'Flush': 7,
+                 'Full House': 8,
+                 'Four of a Kind': 9,
+                 'Steel wheel': 10,
+                 'Straight Flush': 11}
+        
+        if len(self._cards) != 5: #Not valid hand
+            self._hand_rank.append(ranks['Incomplete'])
+            return #We need to prevent checking for rank while we don't have any cards
+        
+        bool_dict = OrderedDict() #Dict of booleans
+        bool_dict['Straight Flush'] = self._is_straight_flush()
+        bool_dict['Steel wheel'] = self._is_steel_wheel()
+        bool_dict['Four of a Kind'] = self._is_four_of_a_kind()
+        bool_dict['Full House'] = self._is_full_house()
+        bool_dict['Flush'] = self._is_flush()
+        bool_dict['Straight'] = self._is_straight()
+        bool_dict['Wheel'] = self._is_wheel()
+        bool_dict['Three of a Kind'] = self._is_three_of_a_kind()
+        bool_dict['Two Pairs'] = self._is_two_pairs()
+        bool_dict['Pair'] = self._is_pair()
+
+        found_combo = False
+        for k, fn in bool_dict.items(): #k - key, fn - value (did we find a combination?)
+            if fn:
+                self._hand_rank.append(ranks[k])
+                found_combo = True
+                break
+        if not found_combo: 
+            self._hand_rank.append(ranks['High Card'])
+            #WIP
         pass
+
+    def get_rank(self) -> list: #Only for debug purporse
+        self._update_stats
+        return self._hand_rank
 
     #Reminder for Counter
     #We have dict inside, so for amounts of cards we have to check values of that dict

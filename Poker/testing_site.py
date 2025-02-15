@@ -11,6 +11,15 @@ def pass_test1_deck(): #Testing drawing from deck
     print(hand)
     print(deck)
 
+def pass_test1_poker_hand(): #Testing checking for combination
+    test_string = ["6D", "7D", "8D", "6C", "7H"]
+    test_hand = cl.DynamicClassicPokerHand()
+    for c in test_string:
+        new_card = cl.Card(c)
+        test_hand.append(new_card)
+    print(test_hand)
+    print(test_hand.get_rank())
+
 #Passing needed tests here
 if __name__=="__main__":
-    pass_test1_deck()
+    pass_test1_poker_hand()
