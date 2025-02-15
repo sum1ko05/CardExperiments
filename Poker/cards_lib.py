@@ -14,7 +14,7 @@ class Card:
         self.__id = secrets.token_hex(16) #Assigning token hex for future sanity check
 
     #Calculating for easier value comparing
-    def __set_true_value(self):
+    def __set_true_value(self) -> None:
         elders = {'J': 11, 'Q': 12, 'K': 13, 'A': 14}
         self.__true_value = 0
         try:
@@ -57,12 +57,12 @@ class DynamicHand:
     #Just inserting card into hand (mosly from deck)
     #You need to pass there Card object since i want to prevent cheating
     #Calculations with cards are planned in inherited classes
-    def append(self, card: Card):
+    def append(self, card: Card) -> None:
         self._cards.append(card)
         self._update_stats()
 
     #Internal function for seeking card by string value
-    def _find_card_by_str(self, c: str):
+    def _find_card_by_str(self, c: str) -> Card | None:
         target_card = Card(c)
         for card in self._cards:
             if target_card.true_value == card.true_value:
@@ -72,7 +72,7 @@ class DynamicHand:
 
     #Just drawing card from hand
     #You can pass both str and Card objects since calling function is basically a request
-    def draw(self, card: str|Card):
+    def draw(self, card: str|Card) -> Card | None:
         if type(card) == str:
             drawn_card = self._find_card_by_str(c=card)
             try:
@@ -92,7 +92,7 @@ class DynamicHand:
 
     #Function that should be called after any change in hand
     #Could be overriden in inherited classes, because stats are diffrent for any game
-    def _update_stats(self):
+    def _update_stats(self) -> None:
         if self._enable_sorting:
             self._sort(priority="values")
         pass
@@ -100,7 +100,7 @@ class DynamicHand:
     #Stable sorting cards with variable priority
     #For example, in poker suits doesn't matter unless you have mono-suit hand
     #But in Durak (traditional Russian card game) suits matter, so you would want to sort by suits first
-    def _sort(self, priority: str = "values"):
+    def _sort(self, priority: str = "values") -> None:
         if priority not in ["values", "suits"]:
             raise ValueError
         if priority == "suits":
@@ -123,9 +123,55 @@ class DynamicClassicPokerHand(DynamicHand):
     #There would be calculations to see power of hand, comparing other hands, etc.
     def __init__(self):
         DynamicHand.__init__(self, enable_sorting=True)
+        self._value_counter = Counter()
+        self._hand_rank = [] #It would be used for comparing hands
 
-    def _update_stats(self):
+    #Overriding updating stats
+    def _update_stats(self) -> None:
         self._sort(priority="values")
+        self._value_counter = Counter([x.value for x in self._cards])
+
+    def _set_rank(self) -> None:
+        pass
+
+    #Reminder for Counter
+    #We have dict inside, so for amounts of cards we have to check values of that dict
+
+    #Checking for combinations
+    def _is_pair(self) -> bool: 
+        return max(self._value_counter.values()) == 2 
+    
+    def _is_two_pairs(self) -> bool:
+        return list(self._value_counter.values()).count(2) == 2 #Two times two cards with same value
+    
+    def _is_three_of_a_kind(self) -> bool:
+        return max(self._value_counter.values()) == 3
+
+    #We should sort hand first before checking for any combos
+    def _is_wheel(self) -> bool: #Kind of straight, calculating it separately for easier comparing
+        if [x.true_value for x in self._cards] == list(range(2, 6)) + [14]: #Ace-to-five => wheel
+            return True #Found a wheel
+        return False
+    
+    def _is_straight(self) -> bool:
+        first_value = self._cards[0].true_value
+        return [x.true_value for x in self._cards] == list(range(first_value, first_value + 5))
+    
+    def _is_flush(self) -> bool:
+        return len(set([x.suit for x in self._cards])) == 1
+    
+    def _is_full_house(self) -> bool:
+        return 3 in self._value_counter.values() and 2 in self._value_counter.values()
+    
+    def _is_four_of_a_kind(self) -> bool:
+        return max(self._value_counter.values()) == 4
+    
+    def _is_steel_wheel(self) -> bool:
+        return self._is_wheel() and self._is_flush()
+    
+    def _is_straight_flush(self) -> bool:
+        return self._is_straight() and self._is_flush()
+    #We don't differentiate royal flush since it easily calculates through straight flush
 
 class Deck(DynamicHand):
     #Just creating deck and shuffling it
@@ -141,7 +187,7 @@ class Deck(DynamicHand):
         random.shuffle(self._cards)
 
     #You can draw only from top of deck, so you don't have to specify card that you want to draw
-    def draw(self):
+    def draw(self) -> Card | None:
         if len(self._cards) > 0:
             return super().draw(self._cards[0])
         return None
