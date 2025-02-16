@@ -126,6 +126,11 @@ class DynamicClassicPokerHand(DynamicHand):
         self._hand_rank = [] #It would be used for comparing hands
         DynamicHand.__init__(self, enable_sorting=True)
 
+    @property
+    def hand_rank(self): #Getter
+        self._update_stats
+        return tuple(self._hand_rank) #I don't want to mutate this list separately from object
+
     #Overriding updating stats and sort function
     def _update_stats(self) -> None:
         self._value_counter = Counter([x.value for x in self._cards])
@@ -181,6 +186,25 @@ class DynamicClassicPokerHand(DynamicHand):
     def get_rank(self) -> list: #Only for debug purporse
         self._update_stats
         return self._hand_rank
+    
+    def __gt__(self, other):
+        if self._hand_rank[0] == 0:
+            return False #Comparing incomplete hands doesn't make any sense
+        for i in range(min(len(self.hand_rank), len(other.hand_rank))):
+            if self.hand_rank[i] != other.hand_rank[i]:
+                return self.hand_rank[i] > other.hand_rank[i]
+        return len(self.hand_rank) > len(other.hand_rank)
+    
+    def __lt__(self, other):
+        if self._hand_rank[0] == 0:
+            return False #Comparing incomplete hands doesn't make any sense
+        for i in range(min(len(self.hand_rank), len(other.hand_rank))):
+            if self.hand_rank[i] != other.hand_rank[i]:
+                return self.hand_rank[i] < other.hand_rank[i]
+        return len(self.hand_rank) < len(other.hand_rank)
+    
+    def __eq__(self, other):
+        return self.hand_rank == other.hand_rank
 
     #Reminder for Counter
     #We have dict inside, so for amounts of cards we have to check values of that dict
