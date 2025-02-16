@@ -100,15 +100,15 @@ class DynamicHand:
     #Stable sorting cards with variable priority
     #For example, in poker suits doesn't matter unless you have mono-suit hand
     #But in Durak (traditional Russian card game) suits matter, so you would want to sort by suits first
-    def _sort(self, priority: str = "values") -> None:
+    def _sort(self, priority: str = "values", reversed: bool = False) -> None:
         if priority not in ["values", "suits"]:
             raise ValueError
         if priority == "suits":
-            self._cards.sort(key=lambda c: c.true_value)
-            self._cards.sort(key=lambda c: c.suit)
+            self._cards.sort(key=lambda c: c.true_value, reverse=reversed)
+            self._cards.sort(key=lambda c: c.suit, reverse=reversed)
         if priority == "values":
-            self._cards.sort(key=lambda c: c.suit)
-            self._cards.sort(key=lambda c: c.true_value)
+            self._cards.sort(key=lambda c: c.suit, reverse=reversed)
+            self._cards.sort(key=lambda c: c.true_value, reverse=reversed)
         pass
     
     #It'll return stuff that will show you when you pass this object to print() or str()
@@ -126,12 +126,16 @@ class DynamicClassicPokerHand(DynamicHand):
         self._hand_rank = [] #It would be used for comparing hands
         DynamicHand.__init__(self, enable_sorting=True)
 
-    #Overriding updating stats
+    #Overriding updating stats and sort function
     def _update_stats(self) -> None:
-        self._sort(priority="values")
         self._value_counter = Counter([x.value for x in self._cards])
+        self._sort()
         self._set_rank()
-
+    
+    def _sort(self) -> None:
+        super()._sort(reversed=True)
+        self._cards.sort(key=lambda c: self._value_counter[c.value], reverse=True)
+    
     def _set_rank(self) -> None:
         self._hand_rank.clear()
         ranks = {'Incomplete': 0,
@@ -171,7 +175,7 @@ class DynamicClassicPokerHand(DynamicHand):
                 break
         if not found_combo: 
             self._hand_rank.append(ranks['High Card'])
-            #WIP
+        self._hand_rank += [x.true_value for x in self._cards]
         pass
 
     def get_rank(self) -> list: #Only for debug purporse
@@ -193,13 +197,13 @@ class DynamicClassicPokerHand(DynamicHand):
 
     #We should sort hand first before checking for any combos
     def _is_wheel(self) -> bool: #Kind of straight, calculating it separately for easier comparing
-        if [x.true_value for x in self._cards] == list(range(2, 6)) + [14]: #Ace-to-five => wheel
+        if [x.true_value for x in self._cards] == [14] + list(range(5, 1, -1)): #Ace-to-five => wheel
             return True #Found a wheel
         return False
     
     def _is_straight(self) -> bool:
         first_value = self._cards[0].true_value
-        return [x.true_value for x in self._cards] == list(range(first_value, first_value + 5))
+        return [x.true_value for x in self._cards] == list(range(first_value, first_value - 5, -1))
     
     def _is_flush(self) -> bool:
         return len(set([x.suit for x in self._cards])) == 1
