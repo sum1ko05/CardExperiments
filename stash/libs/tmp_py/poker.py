@@ -1,5 +1,5 @@
 from collections import Counter, OrderedDict
-from libs.base.cards import DynamicHand
+from cards import DynamicHand
 
 class DynamicClassicPokerHand(DynamicHand):
     #This is Classic Poker hand, that inherits from DynamicHand
