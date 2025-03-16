@@ -2,8 +2,9 @@
 #include <iostream>
 #include <cstdlib>
 
-namespace cards
+namespace playingcards
 {
+    //We can use finite states here at least (we can refactor this later lmao)
     enum class Values {D2 = 2, D3, D4, D5, D6, D7, D8, D9, D10, Jack, Queen, King, Ace};
     enum class Suits {Hearts, Clubs, Diamonds, Spades};
 
@@ -25,7 +26,8 @@ namespace cards
             m_value = value;
             m_suit = suit;
         }
-        //Only for assigning new values! Don't use it for copying!
+        //Only for assigning new values! Don't use it for literal copying!
+        //(i just wanted to prevent any possible cheating)
         Card& operator=(Card copy)
         {
             swap(copy);

@@ -12,5 +12,5 @@ set_target_properties(${TARGET} PROPERTIES
 
 add_executable(CardTest 
     tests/card_test.cpp
-    libs/cards/cards.hpp
+    libs/include/cards/cards.hpp
 )
