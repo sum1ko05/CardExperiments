@@ -15,28 +15,11 @@ namespace playingcards
         Values m_value;
         Suits m_suit;
 
-        void swap(Card& other)
-        {
-            std::swap(m_value, other.m_value);
-            std::swap(m_suit, other.m_suit);
-        }
+        void swap(Card& other);
     public:
-        Card(Values value, Suits suit)
-        {
-            m_value = value;
-            m_suit = suit;
-        }
-        //Only for assigning new values! Don't use it for literal copying!
-        //(i just wanted to prevent any possible cheating)
-        Card& operator=(Card copy)
-        {
-            swap(copy);
-            return *this;
-        }
-        ~Card()
-        {
-            
-        };
+        Card(Values value, Suits suit);
+        Card& operator=(Card copy);
+        ~Card();
 
         //IO streams (no istream)
         friend std::ostream& operator<<(std::ostream& out, const Card& card)

@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../libs/include/cards/cards.hpp"
+#include "../libs/include/cards.hpp"
 
 int main()
 {

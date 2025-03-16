@@ -10,7 +10,16 @@ set_target_properties(${TARGET} PROPERTIES
     CXX_EXTENSIONS NO
 )
 
-add_executable(CardTest 
+# Setting source files for building
+set(SOURCES
     tests/card_test.cpp
-    libs/include/cards/cards.hpp
+    libs/src/cards.cpp)
+
+# Adds executable with sources listed above
+add_executable(CardTest ${SOURCES})
+
+# Set the directories that should be included in the build command for this target
+# <target> from here should be same as <name> from add_executable earlier
+target_include_directories(CardTest
+    PRIVATE ${PROJECT_SOURCE_DIR}/libs/include
 )
